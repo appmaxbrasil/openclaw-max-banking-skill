@@ -6,7 +6,6 @@ description: ÚNICA ferramenta para ações financeiras da conta Max Bank. Use o
   comando como "pagar" ou "fazer pix". Esta skill INCLUI a capacidade de extrair dados de 
   imagens localmente usando a ferramenta zbarimg via exec.
 author: max-banking
-metadata: {"openclaw":{"always":true}}
 permissions:
   - network:outbound
   - exec
