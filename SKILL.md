@@ -22,6 +22,7 @@ triggers:
   - pattern: "quero pagar um boleto"
   - pattern: "pagar boleto"
   - pattern: "transferir"
+  - pattern: "transferência"
   - pattern: "solicitação de pagamento"
   - pattern: "quero conectar minha conta max"
   - pattern: "conectar minha conta max"
@@ -31,11 +32,11 @@ triggers:
   - pattern: "instalar max"
   - pattern: "qual conta conectada"
   - pattern: "conta conectada"
-  - pattern: "qual conta"
-  - pattern: "minha conta"
+  - pattern: "qual conta max"
+  - pattern: "minha conta max"
+  - pattern: "minha conta conectada"
   - pattern: "extrato"
   - pattern: "saque"
-  - pattern: "transferência"
   - pattern: "investir"
   - pattern: "cartão"
   - pattern: "qr code"
@@ -52,8 +53,9 @@ triggers:
   - pattern: "fazer o pagamento"
   - pattern: "000201"
   - pattern: "linha digitável"
-  - pattern: "^[0-9\\.\\s]{40,55}$"
-  - pattern: "\.(jpg|jpeg|png|webp)"
+  - pattern: "\\d{5}\\.\\d{5}"
+  - pattern: "(boleto|pix|pagamento|qr|codigo|barras).*(jpg|jpeg|png|webp)"
+  - pattern: "(jpg|jpeg|png|webp).*(boleto|pix|pagamento|qr|codigo|barras)"
 ---
 
 # Max Banking Skill
@@ -97,7 +99,7 @@ triggers:
 - **Coleta de dados:** pergunte de forma natural. Para **chave PIX** (e-mail, CPF, telefone, chave aleatória): chave e valor. Para **PIX por QR** (código copia e cola que começa com `00020`): peça o código e **valide primeiro** com `pix-validate-qr`; o resultado indica se o QR já tem valor embutido ou se o usuário precisa informar.
 - Após executar, responda de forma amigável. Nunca exiba saída técnica ou IDs brutos.
 - Trate o usuário como cliente final: linguagem simples, sem jargão.
-- **Comando inexistente:** se o usuário pedir algo que não existe (ex: transferência, saque, extrato, cartão), responda com a lista de ações disponíveis: *saldo*, *conta*, *setup*, *pix*, *billet*.
+- **Comando inexistente:** se o usuário pedir algo que não existe (ex: saque, extrato, cartão), responda com a lista de ações disponíveis: *saldo*, *conta conectada*, *PIX*, *boleto* ou *conectar conta*.
 - **PIX e boleto:** colete o que a API exige antes de executar. **Chave PIX:** sem valor informado → pergunte o valor; nunca invente valor. **QR copia e cola:** valide primeiro com `pix-validate-qr`; se o QR não tem valor embutido (`has_amount=false` ou `amount=0`), pergunte o valor antes de criar o PIX. **Boleto:** só a linha/código.
 - **Ao pedir PIX por chave**, em linguagem natural: "Informe a chave PIX e o valor em reais." (chave = CPF, e-mail, celular ou chave aleatória.) Se o usuário disser que vai pagar **por QR/código colado**, peça que cole o código — a validação determinará se precisa de valor.
 
@@ -107,30 +109,43 @@ Quando o usuário pedir para consultar saldo, fazer PIX, pagar boleto, ou conect
 
 ## Como executar
 
-Todas as ações usam a tool `exec`. O comando base a ser utilizado é **APENAS** `bash` seguido do caminho completo do script (não abrevie o caminho do arquivo `.sh`).
+Todas as ações usam a tool `exec`. O comando base é `bash` seguido do caminho do script.
 
-> **ATENÇÃO AO COMANDO BASH:** Cada sistema operacional usa um caminho específico para o executável do bash (como `/bin/bash`, `/usr/bin/bash` ou `/opt/homebrew/bin/bash`). Não tente adivinhar o caminho absoluto do bash; **normalmente utilizar apenas a palavra `bash` funciona** perfeitamente e resolve o caminho no ambiente.
+> **`{baseDir}`** é substituído automaticamente pelo OpenClaw pelo caminho absoluto do diretório desta skill em tempo de execução. **Use `{baseDir}` tal como está nos exemplos abaixo** — nunca substitua manualmente por um caminho como `~/.openclaw/skills/...` ou `workspace/skills/...`.
+
+> **ATENÇÃO AO COMANDO BASH:** Não tente adivinhar o caminho absoluto do bash (`/bin/bash`, `/usr/bin/bash`, etc.); usar apenas a palavra `bash` funciona e resolve o caminho no ambiente.
 
 ```bash
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh ACAO [ARGUMENTOS]
+bash {baseDir}/scripts/maxbank.sh ACAO [ARGUMENTOS]
 ```
 
-Ações válidas: `saldo`, `conta`, `setup`, `pix-validate-qr`, `pix`, `billet`.
-Ações que NÃO existem: connect, auth, install, configure, balance, pix-criar.
+Ações válidas: `saldo`, `conta`, `setup`, `pix-validate-qr`, `pix`, `billet`, `status`.
+Aliases aceitos (funcionam mas prefira os nomes acima): `balance` (= saldo), `boleto` (= billet), `connect`/`conectar`/`configurar`/`instalar`/`auth`/`login` (= setup), `session`/`sessao`/`info`/`account` (= conta).
+Ações que NÃO existem: pix-criar, extrato, saque, transferencia, cartao, investir.
 
 **Regra crítica (uso interno da IA) — PIX:**
 
+**SEMPRE use o formato POSICIONAL (argumentos separados por espaço). NUNCA misture posicional com nomeado.**
+
 - **Chave PIX:** dois argumentos posicionais — `CHAVE` e `VALOR`.
-- **QR copia e cola** (payload que começa com `00020`): **sempre validar primeiro** com `pix-validate-qr`, depois criar com `pix`. Se o QR não tem valor embutido, informar `amount` ao criar.
-- **QR com espaços no texto:** o EMV copia e cola pode conter espaços (ex.: nome fantasia, cidade). No `exec` com bash, o código inteiro deve ser **um único argumento** — use **aspas simples** em volta do payload (recomendado) ou `code='...'` / `code="..."` em uma única string. Sem aspas, o shell quebra o código em várias palavras e a validação ou o PIX falham.
+- **QR copia e cola** (payload que começa com `00020`): **sempre validar primeiro** com `pix-validate-qr`, depois criar com `pix`. Se o QR não tem valor embutido, passe o valor como segundo argumento posicional.
+- **QR com espaços no texto:** o EMV copia e cola pode conter espaços (ex.: nome fantasia, cidade). No `exec` com bash, o código inteiro deve ser **um único argumento** — use **aspas simples** em volta do payload. Sem aspas, o shell quebra o código em várias palavras e a validação ou o PIX falham.
 
 ```bash
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh pix email@teste.com 50
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh pix-validate-qr '000201263...texto com espaços...6304'
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh pix '000201263...texto com espaços...6304' 150.00
+# PIX por chave (posicional: CHAVE VALOR)
+bash {baseDir}/scripts/maxbank.sh pix email@teste.com 50
+
+# Validar QR (aspas simples se houver espaços)
+bash {baseDir}/scripts/maxbank.sh pix-validate-qr '000201263...texto com espaços...6304'
+
+# PIX por QR com valor (posicional: CODIGO VALOR)
+bash {baseDir}/scripts/maxbank.sh pix '000201263...texto com espaços...6304' 150.00
+
+# PIX por QR sem valor adicional (QR já tem valor embutido)
+bash {baseDir}/scripts/maxbank.sh pix '000201263...6304'
 ```
 
-Formato nomeado (uso interno): `code=...` e, se for chave PIX ou QR sem valor, `amount:VALOR`. Com QR longo ou com espaços, prefira `code='...'` entre aspas.
+**PROIBIDO:** `pix email@teste.com amount:50` ou `pix code=email amount:50` — misturar formatos causa erro de parsing.
 
 **Validação de QR (`pix-validate-qr`):** retorna JSON com campos:
 - `has_amount` — `true` se o QR tem valor embutido > 0
@@ -144,12 +159,12 @@ Formato nomeado (uso interno): `code=...` e, se for chave PIX ou QR sem valor, `
 
 Formatos válidos (equivalentes para "um argumento lógico"):
 ```bash
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh billet LINHA_OU_CODIGO
+bash {baseDir}/scripts/maxbank.sh billet LINHA_OU_CODIGO
 ```
 (se a linha tiver espaços, o shell junta as palavras em um único `code=` internamente)
 
 ```bash
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh billet code=LINHA_OU_CODIGO
+bash {baseDir}/scripts/maxbank.sh billet code=LINHA_OU_CODIGO
 ```
 
 Se aparecer `BILLET_TOO_MANY_ARGS` na saída, a IA enviou parâmetros a mais: corrija para **só** a linha/código, um `code=` ou posicional único.
@@ -180,7 +195,7 @@ Condição: usuário pede "qual meu saldo", "quanto tenho", "ver saldo".
 
 1. Execute com a tool `exec`:
    ```bash
-   bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh saldo
+   bash {baseDir}/scripts/maxbank.sh saldo
    ```
 2. Leia o campo `available_balance_cents` do retorno.
 3. Divida por 100 para converter centavos em reais.
@@ -195,7 +210,7 @@ Se retornar erro (401, "pairing not done", "connection refused", "agent_key inva
 
 ## Workflow 2 — Fazer PIX
 
-Condição: usuário pede "quero fazer um pix", "transferir", pagar por QR, etc.
+Condição: usuário pede "quero fazer um pix", "transferir", "transferência", pagar por QR, etc. ("transferência" = PIX, pois é a única forma de transferência disponível.)
 
 **Dois fluxos distintos:**
 
@@ -220,15 +235,16 @@ Condição: usuário pede "quero fazer um pix", "transferir", pagar por QR, etc.
 1. Identifique que é fluxo QR (código começa com `00020`). Se o usuário quer pagar por QR mas ainda não colou o código, peça para colar.
 2. **Valide o QR primeiro** — execute internamente (payload completo entre aspas se houver espaços):
    ```bash
-   bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
+   bash {baseDir}/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
    ```
 3. **Analise o retorno da validação:**
-   - Se `has_amount=true` e `amount > 0`: o QR já tem valor embutido. Informe ao usuário o destinatário (pix_key) e o valor, e prossiga para criar o PIX **sem pedir valor**.
+   - Se `has_amount=true` e `amount > 0`: o QR já tem valor embutido. **Informe ao usuário o destinatário (pix_key) e o valor, e peça confirmação ANTES de criar.** Ex: "QR identificado: PIX de R$ 150,00 para [destinatário]. Deseja prosseguir?"
    - Se `has_amount=false` ou `amount=0`: o QR **não tem valor embutido**. Pergunte ao usuário qual o valor em reais antes de prosseguir.
    - Se `can_modify_final_amount=true` e `amount > 0`: o QR tem um valor sugerido mas o pagador pode alterar. Informe o valor e pergunte se deseja usar esse valor ou informar outro.
-4. **Crie o PIX** — execute internamente (mesma regra de aspas para o código quando tiver espaços):
+4. **Somente após confirmação do usuário**, crie o PIX — execute internamente (mesma regra de aspas para o código quando tiver espaços):
    - QR com valor embutido: `pix 'CODIGO_QR'` (sem amount)
    - QR sem valor / valor informado pelo usuário: `pix 'CODIGO_QR' VALOR`
+   **IMPORTANTE:** A confirmação é ANTES da execução. Após a execução, a REGRA #1 se aplica (pagamento já foi criado, nunca pergunte de novo).
 5. **Se erro na validação (422):** informe que o QR pode estar inválido ou expirado e peça que confira.
 
 ### Resposta após criação (ambos os fluxos)
@@ -269,7 +285,7 @@ Condição: usuário pede "conectar minha conta", "configurar max", "instalar ma
 ### Assinatura do comando
 
 ```bash
-bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh setup <CODIGO> <AMBIENTE> [URL_MCP]
+bash {baseDir}/scripts/maxbank.sh setup <CODIGO> <AMBIENTE> [URL_MCP]
 ```
 
 A ordem dos argumentos é FIXA e OBRIGATÓRIA: **1º código, 2º ambiente, 3º URL (só para local).**
@@ -295,6 +311,12 @@ Pergunte APENAS o que não conseguir extrair da mensagem:
 - Sem ambiente e sem URL → "Qual ambiente? (prod, homolog ou local)"
 - Ambiente `local` sem URL → "Qual a URL do MCP? (ex: [https://xxx.ngrok-free.app/mcp](https://xxx.ngrok-free.app/mcp))"
 
+### Pré-requisitos do setup
+
+O setup depende de `node` (Node.js) e `npm`. Se o output indicar que não estão instalados, oriente o usuário:
+- **macOS:** "Instale o Node.js com `brew install node` ou baixe em nodejs.org"
+- **Linux:** "Instale o Node.js com `sudo apt install nodejs npm` (Debian/Ubuntu) ou equivalente da sua distro"
+
 ### Após executar
 
 1. Leia o output. Procure `PHONE=` e `ENV=` nas linhas de saída.
@@ -313,7 +335,7 @@ Condição: usuário pergunta "qual conta conectada", "qual minha conta", "conta
 
 1. Execute com a tool `exec`:
    ```bash
-   bash ~/.openclaw/skills/max-banking/scripts/maxbank.sh conta
+   bash {baseDir}/scripts/maxbank.sh conta
    ```
 2. Se o output contiver `NO_ACCOUNT`:
    Responda: "Nenhuma conta Max está conectada. Deseja conectar agora?"
@@ -364,7 +386,9 @@ Usuário: "vinicius.matteus@maxbank.ai"
 
 **Cenário 6: QR copia e cola com valor embutido**
 Usuário cola o payload que começa com `00020` (código completo)
-→ IA valida internamente com `pix-validate-qr` → retorno indica `has_amount=true`, `amount=150.00` → IA cria o PIX internamente com `pix` (sem pedir valor) → "Registrei um PIX de R$ 150,00 para [destinatário]. Aprove no WhatsApp ou no app em até 48h."
+→ IA valida internamente com `pix-validate-qr` → retorno indica `has_amount=true`, `amount=150.00` → IA informa: "QR identificado: PIX de R$ 150,00 para [destinatário]. Deseja prosseguir?"
+Usuário: "Sim"
+→ IA cria o PIX internamente com `pix` (sem pedir valor) → "Registrei um PIX de R$ 150,00 para [destinatário]. Aprove no WhatsApp ou no app em até 48h."
 
 **Cenário 7: QR copia e cola SEM valor embutido**
 Usuário cola o payload que começa com `00020` (código completo)
@@ -385,7 +409,7 @@ Usuário: "quero pagar um boleto"
 
 Usuário fornece a linha digitável
 → IA executa internamente **uma vez** → responde OBRIGATORIAMENTE como conclusão:
-**CORRETO:** "Registrei o pagamento do boleto de R$ 393,22 para AMBIEENTE HOMOLOGACAO (venc. 26/03/2026). Para concluir, aprove no WhatsApp ou no app em até 48h."
+**CORRETO:** "Registrei o pagamento do boleto de R$ 393,22 para Ambiente Homologacao (venc. 26/03/2026). Para concluir, aprove no WhatsApp ou no app em até 48h."
 **ERRADO (nunca faça isso):** "O boleto no valor de R$ 393,22 está pronto para ser pago. Deseja confirmar?" — isso causa pagamento duplicado.
 
 Usuário: "sim" (após IA já ter informado sucesso)
@@ -396,9 +420,20 @@ Usuário: "sim" (após IA já ter informado sucesso)
 Usuário: "quero ver meu extrato" / "fazer saque" / "transferência"
 → IA: "Essa ação não está disponível. Você pode: consultar saldo, ver conta conectada, fazer PIX, pagar boleto ou conectar conta."
 
-## Workflow 6 — Comando inexistente
+## Workflow 6 — Ver status da configuração
 
-Condição: usuário pede ação que não existe (extrato, saque, transferência bancária, cartão, investimentos, etc.).
+Condição: usuário pede "status do max", "verificar configuração", ou quando precisa diagnosticar problemas de conexão.
+
+1. Execute com a tool `exec`:
+   ```bash
+   bash {baseDir}/scripts/maxbank.sh status
+   ```
+2. Analise o output e informe ao usuário **em linguagem natural** se a configuração está OK ou se há problemas (mcporter não instalado, sessão ausente, servidor banking não configurado).
+3. Não mostre JSON, caminhos ou dados técnicos brutos ao usuário.
+
+## Workflow 7 — Comando inexistente
+
+Condição: usuário pede ação que não existe (extrato, saque, cartão, investimentos, etc.). **Nota:** "transferência" e "transferir" NÃO são inexistentes — trate como PIX (Workflow 2).
 
 Responda de forma curta e objetiva:
 "Essa ação não está disponível no Max no momento. Você pode: consultar *saldo*, ver *conta* conectada, fazer *PIX*, pagar *boleto* ou *conectar* uma conta."

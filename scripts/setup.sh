@@ -116,17 +116,33 @@ fi
 
 # ── 2/5 Skill ────────────────────────────────────────────────────────────────
 
-echo "==> 2/5 Instalando skill max-banking..."
-SKILLS_DIR="${CLAWHUB_WORKDIR:-$PWD}/skills"
-[[ ! -d "$SKILLS_DIR" ]] && SKILLS_DIR="$OPENCLAW_HOME/skills"
-mkdir -p "$SKILLS_DIR"
+echo "==> 2/5 Verificando skill max-banking..."
+# Detecta se a skill já está instalada em algum diretório conhecido
+SKILL_ALREADY_INSTALLED=false
+for CANDIDATE_DIR in \
+  "${CLAWHUB_WORKDIR:-$PWD}/skills/max-banking" \
+  "$OPENCLAW_HOME/workspace/skills/max-banking" \
+  "$OPENCLAW_HOME/skills/max-banking" \
+  "$HOME/.agents/skills/max-banking"; do
+  if [[ -f "$CANDIDATE_DIR/SKILL.md" ]]; then
+    SKILL_ALREADY_INSTALLED=true
+    echo "    Skill já instalada em $CANDIDATE_DIR"
+    break
+  fi
+done
 
-if command -v clawhub &>/dev/null; then
-  (cd "$(dirname "$SKILLS_DIR")" 2>/dev/null || true; clawhub install max-banking --force) 2>/dev/null || true
+if [[ "$SKILL_ALREADY_INSTALLED" == false ]]; then
+  SKILLS_DIR="${CLAWHUB_WORKDIR:-$PWD}/skills"
+  [[ ! -d "$SKILLS_DIR" ]] && SKILLS_DIR="$OPENCLAW_HOME/skills"
+  mkdir -p "$SKILLS_DIR"
+
+  if command -v clawhub &>/dev/null; then
+    (cd "$(dirname "$SKILLS_DIR")" 2>/dev/null || true; clawhub install max-banking --force) 2>/dev/null || true
+  fi
+  mkdir -p "$SKILLS_DIR/max-banking"
+  cp -r "$SKILL_DIR"/* "$SKILLS_DIR/max-banking/" 2>/dev/null || true
+  echo "    Skill instalada em $SKILLS_DIR/max-banking"
 fi
-mkdir -p "$SKILLS_DIR/max-banking"
-cp -r "$SKILL_DIR"/* "$SKILLS_DIR/max-banking/" 2>/dev/null || true
-echo "    Skill em $SKILLS_DIR/max-banking"
 
 # ── 2.5/5 openclaw.json ──────────────────────────────────────────────────────
 
