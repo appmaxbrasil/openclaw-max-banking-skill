@@ -376,11 +376,11 @@ Usuário: "Quero fazer um PIX para maria@email.com"
 → IA: "Qual o valor em reais?"
 
 **Cenário 4: chave e valor na mesma frase**
-Usuário: "PIX de 5 reais para vinicius.matteus@maxbank.ai"
+Usuário: "PIX de 5 reais para email@example.com"
 → IA executa internamente uma vez (pedido explícito com chave e valor) → "PIX de R$ 5 criado para [nome do destinatário]. Aprove no WhatsApp ou no app em até 48h."
 
 **Cenário 5: usuário informa a chave depois (fluxo chave)**
-Usuário: "vinicius.matteus@maxbank.ai"
+Usuário: "email@example.com"
 → IA: "Qual o valor em reais?"
 
 **Cenário 6: QR copia e cola com valor embutido**
