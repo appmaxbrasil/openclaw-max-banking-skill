@@ -1,60 +1,20 @@
 ---
 name: max-banking
-version: 1.0.0
-description: "Ações financeiras da conta Max Bank — saldo, PIX (chave e QR copia e cola), boleto e conexão de conta. Acione proativamente ao receber códigos PIX (00020...), linhas digitáveis de boleto ou imagens de QR/código de barras."
-author: max-banking
+description: "Operacoes financeiras da conta Max Bank via MCP. Use quando o usuario pedir saldo, fazer PIX (chave ou QR copia e cola), pagar boleto, conectar conta Max, ou enviar codigos PIX (00020...), linhas digitaveis de boleto ou imagens de QR/codigo de barras."
+homepage: https://github.com/maxter/mcp-payment-skill
 metadata:
   openclaw:
-    always: true
-permissions:
-  - network:outbound
-  - exec
-triggers:
-  - pattern: "qual meu saldo"
-  - pattern: "quanto tenho"
-  - pattern: "ver saldo"
-  - pattern: "consultar saldo"
-  - pattern: "meu saldo"
-  - pattern: "saldo maxbank"
-  - pattern: "quero fazer um pix"
-  - pattern: "fazer pix"
-  - pattern: "quero pagar um boleto"
-  - pattern: "pagar boleto"
-  - pattern: "transferir"
-  - pattern: "transferência"
-  - pattern: "solicitação de pagamento"
-  - pattern: "quero conectar minha conta max"
-  - pattern: "conectar minha conta max"
-  - pattern: "conectar conta max"
-  - pattern: "conectar minha conta"
-  - pattern: "configurar max"
-  - pattern: "instalar max"
-  - pattern: "qual conta conectada"
-  - pattern: "conta conectada"
-  - pattern: "qual conta max"
-  - pattern: "minha conta max"
-  - pattern: "minha conta conectada"
-  - pattern: "extrato"
-  - pattern: "saque"
-  - pattern: "investir"
-  - pattern: "cartão"
-  - pattern: "qr code"
-  - pattern: "qrcode"
-  - pattern: "código de barras"
-  - pattern: "foto do boleto"
-  - pattern: "imagem do boleto"
-  - pattern: "pagar isso"
-  - pattern: "paga pra mim"
-  - pattern: "pode pagar"
-  - pattern: "lê esse"
-  - pattern: "copia e cola"
-  - pattern: "pix copia e cola"
-  - pattern: "fazer o pagamento"
-  - pattern: "000201"
-  - pattern: "linha digitável"
-  - pattern: "\\d{5}\\.\\d{5}"
-  - pattern: "(boleto|pix|pagamento|qr|codigo|barras).*(jpg|jpeg|png|webp)"
-  - pattern: "(jpg|jpeg|png|webp).*(boleto|pix|pagamento|qr|codigo|barras)"
+    requires:
+      bins:
+        - mcporter
+        - node
+    install:
+      - id: mcporter
+        kind: node
+        package: mcporter
+        bins:
+          - mcporter
+        label: "Install mcporter (npm)"
 ---
 
 # Max Banking Skill
