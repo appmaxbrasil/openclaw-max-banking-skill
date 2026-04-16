@@ -76,15 +76,17 @@ Quando o usuário pedir para consultar saldo, fazer PIX, pagar boleto, ou conect
 
 ## Como executar
 
-Todas as ações usam a tool `exec`. O comando base é `bash` seguido do caminho do script.
+Todas as ações usam a tool `exec`. O script principal é `scripts/maxbank.sh`, relativo ao diretório desta skill (onde este SKILL.md está).
 
-> **`{baseDir}`** é substituído automaticamente pelo OpenClaw pelo caminho absoluto do diretório desta skill. Use `{baseDir}` tal como está nos exemplos — nunca substitua manualmente por um caminho absoluto.
+> **Resolução de caminho (obrigatório):** Antes de chamar `exec`, resolva `scripts/maxbank.sh` contra o diretório desta skill para obter o **caminho absoluto**. Use esse caminho absoluto no comando. **Nunca** passe o texto literal `{baseDir}` ou um caminho relativo para o shell — isso causa "No such file or directory".
 
 > Nunca tente adivinhar o caminho do bash (`/bin/bash`, `/usr/bin/bash`, etc.) — usar apenas `bash` funciona.
 
 ```bash
-bash {baseDir}/scripts/maxbank.sh ACAO [ARGUMENTOS]
+bash <resolved>/scripts/maxbank.sh ACAO [ARGUMENTOS]
 ```
+
+(`<resolved>` = caminho absoluto do diretório desta skill, obtido antes de chamar exec)
 
 Ações válidas: `saldo`, `conta`, `setup`, `pix-validate-qr`, `pix`, `billet`, `status`.
 Aliases aceitos (funcionam mas prefira os nomes acima): `balance` (= saldo), `boleto` (= billet), `connect`/`conectar`/`configurar`/`instalar`/`auth`/`login` (= setup), `session`/`sessao`/`info`/`account` (= conta).
@@ -100,16 +102,16 @@ Ações que NÃO existem: pix-criar, extrato, saque, transferencia, cartao, inve
 
 ```bash
 # PIX por chave (posicional: CHAVE VALOR) — VALOR vem do usuário, nunca inventar
-bash {baseDir}/scripts/maxbank.sh pix CHAVE VALOR
+bash <resolved>/scripts/maxbank.sh pix CHAVE VALOR
 
 # Validar QR (aspas simples se houver espaços)
-bash {baseDir}/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
+bash <resolved>/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
 
 # PIX por QR com valor (posicional: CODIGO VALOR)
-bash {baseDir}/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO' VALOR
+bash <resolved>/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO' VALOR
 
 # PIX por QR sem valor adicional (QR já tem valor embutido)
-bash {baseDir}/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO'
+bash <resolved>/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO'
 ```
 
 **PROIBIDO:** `pix email@teste.com amount:VALOR` ou `pix code=email amount:VALOR` — misturar formatos causa erro de parsing.
@@ -126,12 +128,12 @@ bash {baseDir}/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO'
 
 Formatos válidos (equivalentes para "um argumento lógico"):
 ```bash
-bash {baseDir}/scripts/maxbank.sh billet LINHA_OU_CODIGO
+bash <resolved>/scripts/maxbank.sh billet LINHA_OU_CODIGO
 ```
 (se a linha tiver espaços, o shell junta as palavras em um único `code=` internamente)
 
 ```bash
-bash {baseDir}/scripts/maxbank.sh billet code=LINHA_OU_CODIGO
+bash <resolved>/scripts/maxbank.sh billet code=LINHA_OU_CODIGO
 ```
 
 Se aparecer `BILLET_TOO_MANY_ARGS` na saída, a IA enviou parâmetros a mais: corrija para **só** a linha/código, um `code=` ou posicional único.
@@ -162,7 +164,7 @@ Condição: usuário pede "qual meu saldo", "quanto tenho", "ver saldo".
 
 1. Execute com a tool `exec`:
    ```bash
-   bash {baseDir}/scripts/maxbank.sh saldo
+   bash <resolved>/scripts/maxbank.sh saldo
    ```
 2. Leia o campo `available_balance_cents` do retorno.
 3. Divida por 100 para converter centavos em reais.
@@ -202,7 +204,7 @@ Condição: usuário pede "quero fazer um pix", "transferir", "transferência", 
 1. Identifique que é fluxo QR (código começa com `00020`). Se o usuário quer pagar por QR mas ainda não colou o código, peça para colar.
 2. **Valide o QR primeiro** — execute internamente (payload completo entre aspas se houver espaços):
    ```bash
-   bash {baseDir}/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
+   bash <resolved>/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
    ```
 3. **Analise o retorno da validação:**
    - Se `has_amount=true` e `amount > 0`: o QR já tem valor embutido. **Informe ao usuário o destinatário (pix_key) e o valor, e peça confirmação ANTES de criar.** Ex: "QR identificado: PIX de R$ 150,00 para [destinatário]. Deseja prosseguir?"
@@ -252,7 +254,7 @@ Condição: usuário pede "conectar minha conta", "configurar max", "instalar ma
 ### Assinatura do comando
 
 ```bash
-bash {baseDir}/scripts/maxbank.sh setup <CODIGO> <AMBIENTE> [URL_MCP]
+bash <resolved>/scripts/maxbank.sh setup <CODIGO> <AMBIENTE> [URL_MCP]
 ```
 
 A ordem dos argumentos é FIXA e OBRIGATÓRIA: **1º código, 2º ambiente, 3º URL (só para local).**
@@ -302,7 +304,7 @@ Condição: usuário pergunta "qual conta conectada", "qual minha conta", "conta
 
 1. Execute com a tool `exec`:
    ```bash
-   bash {baseDir}/scripts/maxbank.sh conta
+   bash <resolved>/scripts/maxbank.sh conta
    ```
 2. Se o output contiver `NO_ACCOUNT`:
    Responda: "Nenhuma conta Max está conectada. Deseja conectar agora?"
@@ -393,7 +395,7 @@ Condição: usuário pede "status do max", "verificar configuração", ou quando
 
 1. Execute com a tool `exec`:
    ```bash
-   bash {baseDir}/scripts/maxbank.sh status
+   bash <resolved>/scripts/maxbank.sh status
    ```
 2. Analise o output e informe ao usuário **em linguagem natural** se a configuração está OK ou se há problemas (mcporter não instalado, sessão ausente, servidor banking não configurado).
 3. Não mostre JSON, caminhos ou dados técnicos brutos ao usuário.

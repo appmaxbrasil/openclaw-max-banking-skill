@@ -25,7 +25,7 @@ User → OpenClaw (LLM) → exec maxbank.sh → mcporter → Hosted MCP Server �
 
 ## Key Design Decisions
 
-- **Portable paths via `{baseDir}`:** SKILL.md uses `{baseDir}/scripts/maxbank.sh`. OpenClaw substitutes `{baseDir}` with the absolute skill directory at runtime. The skill must be installed at `~/.openclaw/workspace/skills/max-banking/`.
+- **Resolved relative paths:** SKILL.md declares `scripts/maxbank.sh` as relative to the skill directory and instructs the LLM to resolve the absolute path before calling exec. `{baseDir}` is NOT a shell variable — it's a text convention the LLM sometimes passes literally, causing failures. The `<resolved>` placeholder in examples means the absolute path the LLM must resolve at runtime.
 - **Frontmatter matches OpenClaw spec:** Only `name`, `description`, `homepage`, and `metadata` (single-line JSON) are used. Fields like `author`, `version`, `permissions`, and `triggers` are NOT part of the spec and cause the skill to be silently dropped by the parser. The `name` uses snake_case (`max_banking`) per OpenClaw convention.
 - **No local proxy:** Auth is injected via mcporter's `--header` config, not through a local proxy server.
 - **Single-argument billet:** The `banking_billet` MCP tool accepts only `code=<digitavel>`. Extra params (amount, description) cause 422 errors. The shell script enforces this with `BILLET_TOO_MANY_ARGS` validation.
