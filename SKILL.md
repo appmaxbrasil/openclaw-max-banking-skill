@@ -91,6 +91,26 @@ triggers:
 
 ---
 
+## REGRA #2 — PROIBIDO INVENTAR VALOR (prioridade máxima)
+
+**Nunca execute `pix` sem que o usuário tenha informado EXPLICITAMENTE o valor na conversa.** Valores que aparecem em exemplos técnicos deste documento (como 150.00) são ilustrativos — **NUNCA** os use como valor real.
+
+**Antes de executar `pix` por chave, verifique:**
+1. O usuário informou a chave? Se não → pergunte.
+2. O usuário informou o valor em reais **nesta conversa**? Se não → pergunte.
+3. Os DOIS dados vieram do usuário? Só então execute.
+
+**PROIBIDO:**
+- Usar qualquer valor que não foi dito pelo usuário (0, 1, 5, 10, 50, 100, etc.)
+- Inferir valor a partir de contexto, histórico ou exemplos
+- Executar `pix` com valor "padrão", "mínimo" ou "sugerido"
+
+**Se o usuário disser "PIX para email@exemplo.com" sem mencionar valor:** NÃO execute. Pergunte: "Qual o valor em reais?"
+
+**Violação desta regra causa prejuízo financeiro ao usuário.**
+
+---
+
 ## Regras de comunicação (obrigatórias)
 
 - **Respostas curtas e objetivas.** Evite textos longos; vá direto ao ponto.
@@ -129,20 +149,20 @@ Ações que NÃO existem: pix-criar, extrato, saque, transferencia, cartao, inve
 - **QR com espaços no texto:** o EMV copia e cola pode conter espaços (ex.: nome fantasia, cidade). No `exec` com bash, o código inteiro deve ser **um único argumento** — use **aspas simples** em volta do payload. Sem aspas, o shell quebra o código em várias palavras e a validação ou o PIX falham.
 
 ```bash
-# PIX por chave (posicional: CHAVE VALOR)
-bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix email@teste.com 50
+# PIX por chave (posicional: CHAVE VALOR) — VALOR vem do usuário, nunca inventar
+bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix CHAVE VALOR
 
 # Validar QR (aspas simples se houver espaços)
-bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix-validate-qr '000201263...texto com espaços...6304'
+bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix-validate-qr 'CODIGO_QR_COMPLETO'
 
 # PIX por QR com valor (posicional: CODIGO VALOR)
-bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix '000201263...texto com espaços...6304' 150.00
+bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO' VALOR
 
 # PIX por QR sem valor adicional (QR já tem valor embutido)
-bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix '000201263...6304'
+bash $HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh pix 'CODIGO_QR_COMPLETO'
 ```
 
-**PROIBIDO:** `pix email@teste.com amount:50` ou `pix code=email amount:50` — misturar formatos causa erro de parsing.
+**PROIBIDO:** `pix email@teste.com amount:VALOR` ou `pix code=email amount:VALOR` — misturar formatos causa erro de parsing.
 
 **Validação de QR (`pix-validate-qr`):** retorna JSON com campos:
 - `has_amount` — `true` se o QR tem valor embutido > 0
@@ -219,8 +239,8 @@ Condição: usuário pede "quero fazer um pix", "transferir", "transferência", 
 ### Fluxo Chave PIX
 
 1. Identifique que é fluxo chave (texto não começa com `00020`). Pergunte APENAS o que falta:
-   - **Chave + valor na frase** (ex: "PIX de 50 reais para email@teste.com"): execute uma vez (passo 2), sem segunda confirmação.
-   - **Só valor** (ex: "PIX de 50 reais"): pergunte a chave.
+   - **Chave + valor na frase** (ex: "PIX de 25 reais para email@teste.com"): execute uma vez (passo 2), sem segunda confirmação.
+   - **Só valor** (ex: "PIX de 80 reais"): pergunte a chave.
    - **Só chave** (ex: "PIX para maria@email.com"): pergunte o valor.
    - **PROIBIDO:** mostrar exemplos técnicos, nomes de parâmetros, sintaxe de comando ou formato de código ao usuário.
    - **PROIBIDO:** perguntar por descrição, motivo ou mensagem.
@@ -366,7 +386,7 @@ Usuário: "Quero fazer um PIX"
 → IA: "Claro! Você vai pagar com chave PIX (CPF, e-mail, celular ou chave aleatória) ou colando o código do QR copia e cola?"
 
 **Cenário 2: só o valor, fluxo chave**
-Usuário: "Quero fazer um PIX de 50 reais"
+Usuário: "Quero fazer um PIX de 80 reais"
 → IA: "Para qual chave PIX? (e-mail, CPF ou telefone)"
 
 **Cenário 3: só a chave, sem valor (fluxo chave)**
@@ -395,9 +415,9 @@ Usuário: "200 reais"
 
 **Cenário 8: QR com valor modificável**
 Usuário cola o payload que começa com `00020`
-→ IA valida internamente → retorno indica `has_amount=true`, `amount=50.00`, `can_modify_final_amount=true` → IA informa: "O QR sugere R$ 50,00. Deseja usar esse valor ou prefere informar outro?"
+→ IA valida internamente → retorno indica `has_amount=true`, `amount=35.00`, `can_modify_final_amount=true` → IA informa: "O QR sugere R$ 35,00. Deseja usar esse valor ou prefere informar outro?"
 Usuário: "Pode ser esse mesmo"
-→ IA cria o PIX com `pix 'CODIGO_QR'` (usa o valor do QR; aspas se o EMV tiver espaços) → "Registrei um PIX de R$ 50,00 para [destinatário]. Aprove no WhatsApp ou no app em até 48h."
+→ IA cria o PIX com `pix 'CODIGO_QR'` (usa o valor do QR; aspas se o EMV tiver espaços) → "Registrei um PIX de R$ 35,00 para [destinatário]. Aprove no WhatsApp ou no app em até 48h."
 
 ### Boleto
 
