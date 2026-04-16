@@ -25,7 +25,7 @@ User → OpenClaw (LLM) → exec maxbank.sh → mcporter → Hosted MCP Server �
 
 ## Key Design Decisions
 
-- **Relative paths:** SKILL.md uses `scripts/maxbank.sh` (relative to the skill directory). OpenClaw executes commands from the skill root, so relative paths resolve correctly. The skill is always installed at `~/.openclaw/workspace/skills/max-banking/`.
+- **Fixed skill path:** SKILL.md references scripts via `$HOME/.openclaw/workspace/skills/max-banking/scripts/maxbank.sh`. OpenClaw's exec tool runs with `workdir=cwd` (not the skill directory), so relative paths and `{baseDir}` don't work — the full path with `$HOME` is required. The skill must be installed at `~/.openclaw/workspace/skills/max-banking/`.
 - **No local proxy:** Auth is injected via mcporter's `--header` config, not through a local proxy server.
 - **Single-argument billet:** The `banking_billet` MCP tool accepts only `code=<digitavel>`. Extra params (amount, description) cause 422 errors. The shell script enforces this with `BILLET_TOO_MANY_ARGS` validation.
 - **QR validation before PIX creation:** QR PIX (`00020...` payloads) must be validated first via `pix-validate-qr` to check if amount is embedded. This is a two-step flow, not optional.
