@@ -1,11 +1,11 @@
 ---
 name: max-banking
 version: 1.0.0
-description: ÚNICA ferramenta para ações financeiras da conta Max Bank. Use obrigatoriamente para: consultar saldo, fazer PIX (chaves ou QR Code Copia e Cola), pagar boletos e conectar conta. ATENÇÃO: Acione esta skill IMEDIATAMENTE e de forma proativa se o usuário enviar um código PIX (texto começando com '00020...'), uma linha digitável de boleto (números longos), ou 
-  uma imagem/foto contendo um QR Code ou código de barras, mesmo que ele não escreva nenhum 
-  comando como "pagar" ou "fazer pix". Esta skill INCLUI a capacidade de extrair dados de 
-  imagens localmente usando a ferramenta zbarimg via exec.
+description: "Ações financeiras da conta Max Bank — saldo, PIX (chave e QR copia e cola), boleto e conexão de conta. Acione proativamente ao receber códigos PIX (00020...), linhas digitáveis de boleto ou imagens de QR/código de barras."
 author: max-banking
+metadata:
+  openclaw:
+    always: true
 permissions:
   - network:outbound
   - exec
