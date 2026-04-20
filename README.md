@@ -1,5 +1,7 @@
 # MaxBank Skill para OpenClaw
 
+[![CodeQL](https://github.com/appmaxbrasil/openclaw-max-banking-skill/actions/workflows/codeql.yml/badge.svg)](https://github.com/appmaxbrasil/openclaw-max-banking-skill/actions/workflows/codeql.yml)
+
 Skill que conecta seu OpenClaw ao MaxBank para consultar saldo, fazer PIX e pagar boletos.
 
 Toda a comunicação é via **MCP** (Model Context Protocol). O MCP roda hospedado — a autenticação (Agent API Key) é injetada diretamente via header no mcporter, sem necessidade de proxy local.
@@ -29,11 +31,25 @@ Health check do MCP em produção: [https://maxbank-mcp.max.com.br/health](https
 
 ## Instalação
 
+### Via git clone (recomendado enquanto não está no ClawHub)
+
+```bash
+# Clone direto no diretório de skills do OpenClaw
+git clone https://github.com/appmaxbrasil/openclaw-max-banking-skill.git \
+  ~/.openclaw/skills/max-banking
+
+# Ou, se usar workspace:
+git clone https://github.com/appmaxbrasil/openclaw-max-banking-skill.git \
+  ~/.openclaw/workspace/skills/max-banking
+```
+
+Reinicie o gateway do OpenClaw após instalar.
+
+### Via ClawHub (em breve)
+
 ```bash
 clawhub install max-banking
 ```
-
-Ou copie manualmente para `~/.openclaw/skills/max-banking/`.
 
 ## Setup (conectar conta)
 
