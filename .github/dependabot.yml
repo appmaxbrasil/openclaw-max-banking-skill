@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Mantém as actions dos workflows (codeql, scorecard, dependabot PRs) atualizadas
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      # Agrupa atualizações menores/patches em um único PR para reduzir ruído
+      actions-minor:
+        update-types:
+          - "minor"
+          - "patch"

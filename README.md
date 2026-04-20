@@ -1,6 +1,7 @@
 # MaxBank Skill para OpenClaw
 
 [![CodeQL](https://github.com/appmaxbrasil/openclaw-max-banking-skill/actions/workflows/codeql.yml/badge.svg)](https://github.com/appmaxbrasil/openclaw-max-banking-skill/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/appmaxbrasil/openclaw-max-banking-skill/badge)](https://securityscorecards.dev/viewer/?uri=github.com/appmaxbrasil/openclaw-max-banking-skill)
 
 Skill que conecta seu OpenClaw ao MaxBank para consultar saldo, fazer PIX e pagar boletos.
 
