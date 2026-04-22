@@ -157,7 +157,7 @@ cfg.skills = cfg.skills || {};
 cfg.skills.entries = cfg.skills.entries || {};
 cfg.skills.entries['mcporter'] = { enabled: true };
 cfg.skills.entries['steipete/mcporter'] = { enabled: true };
-cfg.skills.entries['max_banking'] = { enabled: true };
+cfg.skills.entries['max-banking'] = { enabled: true };
 cfg.tools = cfg.tools || {};
 cfg.tools.allow = cfg.tools.allow || ['exec', 'process', 'read', 'write', 'edit', 'apply_patch'];
 if (!cfg.tools.allow.includes('exec')) cfg.tools.allow.push('exec');
