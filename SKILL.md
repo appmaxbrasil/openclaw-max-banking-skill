@@ -1,5 +1,5 @@
 ---
-name: max_banking
+name: max-banking
 description: "Operacoes financeiras da conta Max Bank via MCP. Use quando o usuario pedir saldo, fazer PIX (chave ou QR copia e cola), pagar boleto, conectar conta Max, ou enviar codigos PIX (00020...), linhas digitaveis de boleto ou imagens de QR/codigo de barras."
 homepage: https://github.com/appmaxbrasil/openclaw-max-banking-skill
 metadata: {"openclaw":{"requires":{"bins":["mcporter","node"]},"install":[{"id":"mcporter","kind":"node","package":"mcporter","bins":["mcporter"],"label":"Install mcporter (npm)"}]}}
